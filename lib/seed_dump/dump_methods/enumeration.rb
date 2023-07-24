@@ -24,9 +24,18 @@ class SeedDump
                            end
 
           # Loop through the records of the current batch
-          records.offset((batch_number - 1) * batch_size).limit(cur_batch_size).each do |record|
-            record_strings << dump_record(record, options)
+          if options[:connection].present?
+            options[:connection].select_all(
+              records.limit(cur_batch_size).offset((batch_number - 1) * batch_size).to_sql
+            ).each do |record|
+              record_strings << dump_record(record, options)
+            end
+          else
+            records.offset((batch_number - 1) * batch_size).limit(cur_batch_size).each do |record|
+              record_strings << dump_record(record, options)
+            end
           end
+
 
           yield record_strings, last_batch
         end
